@@ -604,6 +604,7 @@ public class BasicAuthenticator extends AbstractApplicationAuthenticator
                     && authenticationResult.getAuthenticatedUser().isPresent()) {
                 isAuthenticated = true;
                 context.removeProperty(FrameworkConstants.CAPTCHA_PARAM_STRING);
+                authenticationResult.getAuthenticatedUser().get().setTenantDomain(requestTenantDomain);
             }
 
             if (!isAuthenticated) {
