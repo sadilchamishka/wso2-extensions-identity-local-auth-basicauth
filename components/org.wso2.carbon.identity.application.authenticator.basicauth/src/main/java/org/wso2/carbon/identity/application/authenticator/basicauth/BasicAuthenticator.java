@@ -585,7 +585,8 @@ public class BasicAuthenticator extends AbstractApplicationAuthenticator
         authProperties.put(PASSWORD_PROPERTY, password);
 
         boolean isAuthenticated = false;
-        AbstractUserStoreManager userStoreManager = getUserStoreManager(username, requestTenantDomain);
+
+        AbstractUserStoreManager userStoreManager = getUserStoreManager(username, "carbon.super");
         // Reset RE_CAPTCHA_USER_DOMAIN thread local variable before the authentication
         IdentityUtil.threadLocalProperties.get().remove(RE_CAPTCHA_USER_DOMAIN);
         // Check the authentication
@@ -604,6 +605,22 @@ public class BasicAuthenticator extends AbstractApplicationAuthenticator
                 isAuthenticated = true;
                 context.removeProperty(FrameworkConstants.CAPTCHA_PARAM_STRING);
             }
+
+            if (!isAuthenticated) {
+                userStoreManager = getUserStoreManager(username, requestTenantDomain);
+                if (userId != null) {
+                    authenticationResult = userStoreManager.authenticateWithID(userId, password);
+                } else {
+                    authenticationResult = userStoreManager.authenticateWithID(UserCoreClaimConstants.USERNAME_CLAIM_URI,
+                            tenantAwareUsername, password, UserCoreConstants.DEFAULT_PROFILE);
+                }
+                if (AuthenticationResult.AuthenticationStatus.SUCCESS == authenticationResult.getAuthenticationStatus()
+                        && authenticationResult.getAuthenticatedUser().isPresent()) {
+                    isAuthenticated = true;
+                    context.removeProperty(FrameworkConstants.CAPTCHA_PARAM_STRING);
+                }
+            }
+
             if (isAuthPolicyAccountExistCheck()) {
                 checkUserExistence();
             }
